@@ -515,8 +515,7 @@ def main():
     classifiers = []
     for c in base_classifiers:
         classifiers.append(c)
-        if c != 'ensemble':  # Ensemble already includes smoothing
-            classifiers.append(f"{c}+hmm")
+        classifiers.append(f"{c}+hmm")
 
     print(f"Classifiers: {', '.join(classifiers)}")
     print(f"SMOTE: {'Enabled' if HAS_SMOTE else 'Disabled'}")
