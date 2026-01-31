@@ -11,6 +11,7 @@ import os
 import sys
 os.environ['PYTHONWARNINGS'] = 'ignore'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['MKL_THREADING_LAYER'] = 'GNU'  # Fix threading compatibility issue
 
 # Suppress compilation warnings from GPU libraries
 import contextlib
@@ -71,7 +72,7 @@ CONTEXT = 2  # temporal context: 2 epochs before + 2 after
 
 # Performance configuration
 FAST_MODE = False  # Set to True for faster training (lower accuracy)
-USE_GPU = False     # Set to True to use GPU acceleration (requires GPU-enabled libraries)
+USE_GPU = True      # GPU acceleration enabled for RTX 5060 (CUDA 12.8)
 
 
 def remap_labels(labels):
@@ -164,9 +165,9 @@ def train_lightgbm(X_train, y_train, use_weights=False, class_weights=None, use_
             print("    LightGBM: Using GPU acceleration")
         except Exception as e:
             print(f"    LightGBM: GPU not available, using CPU ({e})")
-            params['n_jobs'] = 8
+            params['n_jobs'] = 28
     else:
-        params['n_jobs'] = 8
+        params['n_jobs'] = 28
 
     model = lgb.LGBMClassifier(**params)
 
@@ -271,9 +272,9 @@ def train_xgboost(X_train, y_train, use_weights=False, class_weights=None, use_g
     # GPU acceleration (10-20x faster!)
     if use_gpu:
         try:
-            params['tree_method'] = 'gpu_hist'
-            params['device'] = 'cuda:0'  # XGBoost 3.1+ uses 'device' instead of 'gpu_id'
-            params['predictor'] = 'gpu_predictor'
+            # XGBoost 2.x+ recommends: tree_method='hist' + device='cuda'
+            params['tree_method'] = 'hist'
+            params['device'] = 'cuda:0'
             print("    XGBoost: Using GPU acceleration")
         except Exception as e:
             print(f"    XGBoost: GPU not available, using CPU ({e})")
